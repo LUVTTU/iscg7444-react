@@ -1,1 +1,1 @@
-export const BASE_URL = 'http://192.168.0.102:5000';
+export const BASE_URL = 'https://yjjgqqhbtdfr.us-east-1.clawcloudrun.com';

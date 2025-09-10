@@ -1,70 +1,131 @@
-# Getting Started with Create React App
+# React App Deployment on Claw.Cloud Run
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This guide helps you containerize your React application using Docker and deploy it to [Claw.Cloud Run](https://run.claw.cloud).
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🧱 Step 1: Create `Dockerfile`
 
-### `npm start`
+Create a file named `Dockerfile` in the root of your React project:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+```Dockerfile
+# Use official Node.js image as the build environment
+FROM node:20-alpine as build
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+# Set working directory
+WORKDIR /app
 
-### `npm test`
+# Copy project files
+COPY . .
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Install dependencies and build the React app
+RUN npm install && npm run build
 
-### `npm run build`
+# Use a simple web server to serve the build (e.g., serve)
+FROM node:20-alpine
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Set working directory
+WORKDIR /app
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+# Install serve
+RUN npm install -g serve
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+# Copy build output from previous stage
+COPY --from=build /app/dist .
 
-### `npm run eject`
+# Expose port 3000
+EXPOSE 3000
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+# Run the app with serve
+CMD ["serve", "-l", "3000"]
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## 🧾 Step 2: Create `.dockerignore`
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Create a `.dockerignore` file to prevent unnecessary files from being copied into the image:
 
-## Learn More
+```txt
+node_modules
+dist
+.git
+Dockerfile
+docker-compose.yml
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🛠 Step 3: Build & Push to Docker Hub
 
-### Code Splitting
+> 🔐 **Make sure you're logged in to Docker Hub first.**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```bash
+docker login
+```
 
-### Analyzing the Bundle Size
+Then build and push your image (replace `your_repository_name` with your Docker Hub username):
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+docker buildx create --use
+docker buildx build --platform linux/amd64 -t your_repository_name/iscg7444-react:latest --push .
+```
 
-### Making a Progressive Web App
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+## 🚀 Step 4: Deploy to Claw.Cloud Run
 
-### Advanced Configuration
+1. Visit [https://run.claw.cloud](https://run.claw.cloud)
+2. Click **Create App**
+3. Use this image:
+   ```
+   docker.io/your_repository_name/iscg7444-react:latest
+   ```
+4. Set **Port** to `3000`
+5. Set **Resource Limits**:
+   - CPU: `0.1`
+   - Memory: `128Mi`
+6. Click **Deploy**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+---
 
-### Deployment
+## ✅ Step 5: Confirm the Deployment
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Once deployed, you’ll receive a public URL — open it in your browser to access your live React app.
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🧠 Notes
+
+- Make sure your React app builds to `/dist` (default for Vite).
+- If using Create React App, change `/dist` to `/build` in Dockerfile accordingly.
+
+---
+
+## 🧩 Example Project Structure
+
+```
+iscg7444-react/
+├── Dockerfile
+├── .dockerignore
+├── package.json
+├── public/
+├── src/
+└── ...
+```
+
+---
+
+## 🔐 Docker Hub Access
+
+If you're using a **private repository**, you need to:
+- Log in to Docker Hub inside Claw.Cloud Run dashboard
+- Add a **registry secret** if needed
+
+---
+
+## 💬 Help
+
+Contact your instructor if anything is unclear, or refer to Docker & Claw.Cloud documentation.
+
+---
