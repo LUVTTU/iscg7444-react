@@ -33,11 +33,11 @@ RUN npm install -g serve
 # Copy build output from previous stage
 COPY --from=build /app/dist .
 
-# Expose port 3000
-EXPOSE 3000
+# Expose port 80
+EXPOSE 80
 
 # Run the app with serve
-CMD ["serve", "-l", "3000"]
+CMD ["serve", "-l", "80"]
 ```
 
 ---
